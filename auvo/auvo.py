@@ -24,6 +24,7 @@ class Auvo():
         """
         Will insert the necessary information to execute the login.
         """
+        
         # Finding the elements
         user_e = driver.find_element(By.CSS_SELECTOR, 'input[id="usuario"]')
         password_e = driver.find_element(By.CSS_SELECTOR, 'input[id="senha"]')
@@ -39,6 +40,25 @@ class Auvo():
 
         # Submit
         btn_submit.click()
+
+
+    def goToRelatorios(self):
+        """
+        Will access the 'Relatorios' page
+        """
+        driver.implicitly_wait(10)
+        btnRel = driver.find_element(By.ID, "controlaClique3")
+        btnRel.click()
+
+        opKmRodado = driver.find_element(By.CSS_SELECTOR, 'a[href="/kmRodado"]')
+        opKmRodado.click()
+
+
+    def getDailyReport(self):
+        """
+        Will get the info of collaborator in the specified day
+        """
+        pass
 
 
     def getAccessToken(self):
