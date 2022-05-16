@@ -20,7 +20,7 @@ class Auvo():
         driver.get(const.SITE)
 
 
-    def loginAuvo(self, user, password):
+    def loginAuvo(self):
         """
         Will insert the necessary information to execute the login.
         """
@@ -34,8 +34,8 @@ class Auvo():
         password_e.clear()
 
         # Inserting the info
-        user_e.send_keys(user)
-        password_e.send_keys(password)
+        user_e.send_keys(const.USER)
+        password_e.send_keys(const.PASS)
 
         # Submit
         btn_submit.click()
