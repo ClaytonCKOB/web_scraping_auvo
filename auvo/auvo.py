@@ -1,3 +1,5 @@
+import pandas as pd
+from pandas import DataFrame
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -139,7 +141,49 @@ class Auvo():
                 if td_x == 8:
                     td_x = 1
                     td_y += 1
-                    
+
+
+    def getReportData(self, day, collaborator) -> DataFrame:
+        """
+        Will get the atributes of the report
+
+        :Args
+            day: String -> will specify the report's day
+            collaborator: String -> name of the collaborator
+            
+        :Usage
+            getReportData('15/05/2022', 'clayton')
+        """
+        driver.implicitly_wait(20)
+
+        # Finding the elements
+        km_informado = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr/td[2]')
+        km_sistema = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr/td[3]')
+        km_total = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr/td[5]')
+
+        # Treating each value
+        km_informado = km_informado.get_attribute("data-order")
+        km_informado = float(km_informado[:len(km_informado)-3] + "." + km_informado[len(km_informado)-3:])
+
+        km_sistema = km_sistema.get_attribute("data-order")
+        km_sistema = float(km_sistema[:len(km_sistema)-3] + "." + km_sistema[len(km_sistema)-3:])
+
+        km_total = km_total.get_attribute("data-order")
+        km_total = float(km_total[:len(km_total)-3] + "." + km_total[len(km_total)-3:])
+
+        # Creating the dict with the info
+        data = {
+            "Nome": [collaborator.upper()],
+            "Km Inicial Carro": [""],
+            "KM Final Carro": [""],
+            "Km Informado": [km_informado],
+            "Km Sistema": [km_sistema],
+            "Km Total": [km_total],
+            "Data": [day] 
+        }
+
+        return pd.DataFrame(data)
+
 
     def getAccessToken(self):
         """
