@@ -1,9 +1,10 @@
 from auvo.auvo import Auvo
+from auvo.auvo_report import *
 
    
 inst = Auvo("chromedriver.exe")
 inst.openSite()
 inst.loginAuvo()
 inst.goToRelatorios()
-inst.selectDailyReport('16/05/2022', 'thiago')
-print(inst.getReportData('16/05/2022', 'thiago'))
+df = inst.getIntervalReport("9/05/2022", "13/05/2022", "thiago")
+xlsxReport(df)

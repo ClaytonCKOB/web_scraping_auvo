@@ -3,6 +3,7 @@ from pandas import DataFrame
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+import time
 import requests
 import json
 import auvo.constants as const
@@ -15,7 +16,7 @@ class Auvo():
         
     
     def __exit__(self):
-        self.quit()
+        driver.quit()
 
     # Method to open the website of booking
     def openSite(self):
@@ -55,6 +56,31 @@ class Auvo():
         opKmRodado = driver.find_element(By.CSS_SELECTOR, 'a[href="/kmRodado"]')
         opKmRodado.click()
 
+    
+    def getIntervalReport(self, begin, end, collaborator) -> DataFrame:
+        """
+        Will collect the data in the defined interval
+
+        :Args
+            begin: String -> begin of the interval
+            end: String -> end of the interval
+            collaborator: String -> name of the collaborator
+
+        :Usage
+            getIntervalReport("16/05/2022", "18/05/2022", "clayton")
+        """
+        begin = begin.split("/")
+        end = end.split("/")
+        day = int(begin[0])
+        data = pd.DataFrame()
+
+        while day <= int(end[0]):
+            self.selectDailyReport(str(day)+"/"+end[1]+"/"+end[2], collaborator)
+            time.sleep(7)
+            data = pd.concat([data, self.getReportData(str(day)+"/"+end[1]+"/"+end[2], collaborator)], axis=0)
+            day += 1
+        
+        return data
 
     def selectDailyReport(self, day, collaborator):
         """
@@ -76,6 +102,7 @@ class Auvo():
         begin_element.click()
         self.selectDayinTable(day)
 
+        driver.implicitly_wait(10)
         # Select the end of the interval
         end_element = driver.find_element(By.ID, "dataFim")
         end_element.click()
@@ -157,14 +184,10 @@ class Auvo():
         driver.implicitly_wait(20)
 
         # Finding the elements
-        km_informado = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr/td[2]')
         km_sistema = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr/td[3]')
         km_total = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr/td[5]')
 
         # Treating each value
-        km_informado = km_informado.get_attribute("data-order")
-        km_informado = float(km_informado[:len(km_informado)-3] + "." + km_informado[len(km_informado)-3:])
-
         km_sistema = km_sistema.get_attribute("data-order")
         km_sistema = float(km_sistema[:len(km_sistema)-3] + "." + km_sistema[len(km_sistema)-3:])
 
@@ -176,10 +199,10 @@ class Auvo():
             "Nome": [collaborator.upper()],
             "Km Inicial Carro": [""],
             "KM Final Carro": [""],
-            "Km Informado": [km_informado],
             "Km Sistema": [km_sistema],
             "Km Total": [km_total],
-            "Data": [day] 
+            "Data": [day], 
+            "Comparativo": [km_sistema - km_total]
         }
 
         return pd.DataFrame(data)
