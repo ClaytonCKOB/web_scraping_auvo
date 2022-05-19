@@ -1,6 +1,9 @@
 # This file contains the graphic configurations
 from auvo.auvo import Auvo
 from auvo.auvo_report import *
+import time
+import datetime
+from datetime import date
 import tkinter as tk
 from PIL import ImageTk, Image
 
@@ -34,6 +37,18 @@ class Tracking(tk.Tk):
         self.beginInt.place(relx=0.18, rely=0.625)
         self.endInt.place(relx=0.58, rely=0.625)
         
+        # CheckButtons
+        var = tk.IntVar()
+        checkboxes = []
+        
+        checkboxes.append(tk.Checkbutton(self, onvalue=1, variable=var, text="Dia", command=self.dayInterval))  
+        checkboxes.append(tk.Checkbutton(self, onvalue=2, variable=var, text="Semana", command=self.weekInterval))  
+        checkboxes.append(tk.Checkbutton(self, onvalue=3, variable=var, text="Mês", command=self.monthInterval))  
+    
+        checkboxes[0].place(relx=0.18, rely=0.68)
+        checkboxes[1].place(relx=0.18, rely=0.73)
+        checkboxes[2].place(relx=0.18, rely=0.78)
+
         # Button to generate the report
         self.btn_generate = tk.Button(self, borderwidth=0, image=self.img_button)
         self.btn_generate.place(relx=0.18, rely=0.85)
@@ -59,3 +74,40 @@ class Tracking(tk.Tk):
         inst.goToRelatorios()
         df = inst.getIntervalReport(begin, end, collaborator)
         xlsxReport(df)
+    
+
+    def dayInterval(self):
+        """
+        Will insert in the entries the interval that represents the current day
+        """
+        cur_time = time.localtime()
+        day = time.strftime("%d/%m/%Y", cur_time)
+
+        self.beginInt.delete(0,tk.END)
+        self.beginInt.insert(0,day)
+
+        self.endInt.delete(0,tk.END)
+        self.endInt.insert(0,day)
+
+
+    def weekInterval(self):
+        """
+        Will insert in the entries the interval that represents the current week
+        """
+
+    def monthInterval(self):
+        """
+        Will insert in the entries the interval that represents the current month
+        """
+        today = date.today()
+        month = today.month
+        year = today.year
+
+        next_month = datetime.date(year, month, 1).replace(day=28) + datetime.timedelta(days=4)
+        last_day =  next_month - datetime.timedelta(days=next_month.day)
+
+        self.beginInt.delete(0,tk.END)
+        self.beginInt.insert(0,f"01/{month}/{year}")
+
+        self.endInt.delete(0,tk.END)
+        self.endInt.insert(0,last_day)

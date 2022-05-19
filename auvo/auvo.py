@@ -11,9 +11,9 @@ import auvo.constants as const
 class Auvo():
     def __init__(self, driver_path=""):
         global driver
-        driver = webdriver.Chrome(driver_path)
-        driver.maximize_window()
-        
+        #driver = webdriver.Chrome(driver_path)
+        #driver.maximize_window()
+        #
     
     def __exit__(self):
         driver.quit()
@@ -208,7 +208,7 @@ class Auvo():
         return pd.DataFrame(data)
 
 
-    def getAccessToken(self):
+    def getAccessToken(self) -> str:
         """
         Method will make a request to get the access Token
         """ 
@@ -219,15 +219,21 @@ class Auvo():
         request = json.loads(json.dumps(dict(request['result']), indent=5))
         self.accessToken = request['accessToken']
 
+        return self.accessToken
+
  
     def getUsers(self):
         """
         Method will request the list of collaborators
         """
+        paramFilter = {
+            'name': 'Thiago Costa'
+        }
+        paramFilter = json.loads(json.dumps(paramFilter, indent=1))
 
         headers = {
           'Content-Type': 'application/json',
-          'Authorization': self.accessToken
+          'Authorization': 'Bearer '+ self.accessToken
         }
-        request = requests.get('https://api.auvo.com.br/v2/customers/', headers=headers)
-        print(request.json)
+        request = requests.get(f'https://api.auvo.com.br/v2/users/?paramFilter={""}&page={1}&pageSize={10}&order={"asc"}&selectfields={""}', headers=headers)
+        print(request.text)
