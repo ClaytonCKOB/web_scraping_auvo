@@ -11,7 +11,8 @@ import auvo.constants as const
 class Auvo():
     def __init__(self, driver_path=""):
         global driver
-        driver = webdriver.Chrome(driver_path)
+        self.driver_path = driver_path
+        driver = webdriver.Chrome(self.driver_path)
         driver.maximize_window()
         
     
@@ -222,18 +223,25 @@ class Auvo():
         return self.accessToken
 
  
-    def getUsers(self):
+    def getUsers(self) -> list:
         """
         Method will request the list of collaborators
         """
-        paramFilter = {
-            'name': 'Thiago Costa'
-        }
-        paramFilter = json.loads(json.dumps(paramFilter, indent=1))
+        users = []
 
         headers = {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer '+ self.accessToken
+          'Authorization': 'Bearer '+ self.getAccessToken()
         }
+        
         request = requests.get(f'https://api.auvo.com.br/v2/users/?paramFilter={""}&page={1}&pageSize={10}&order={"asc"}&selectfields={""}', headers=headers)
-        print(request.text)
+        
+        request = request.json()
+        request = json.loads(json.dumps(dict(request['result']), indent=5))
+        request = request['entityList']
+        
+        for user in request:
+            if "Técnico de Instalação" in user['jobPosition']:
+                users.append(user['name'].upper())
+        
+        return users

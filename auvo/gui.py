@@ -10,6 +10,7 @@ from PIL import ImageTk, Image
 
 class Tracking(tk.Tk):
     def __init__(self):
+        inst = Auvo("chromedriver.exe")
         super().__init__()
 
         self.img_button = ImageTk.PhotoImage(Image.open(r"images\btn.jpg"))
@@ -26,8 +27,8 @@ class Tracking(tk.Tk):
 
         # Name of collaborator
         self.name = tk.StringVar()
-        self.name.set('Clayton')
-        self.names = ['Thiago', 'Clayton']
+        self.names = inst.getUsers()
+        self.name.set(self.names[0])
         self.collaborators = tk.OptionMenu(self, self.name, *self.names)
         self.collaborators.config(bg="white", fg="black",font=("Arial", 10, "bold"), borderwidth=0, width=38)
         self.collaborators.place(relx=0.175, rely=0.37)
