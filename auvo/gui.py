@@ -1,4 +1,5 @@
 # This file contains the graphic configurations
+from calendar import day_abbr
 from auvo.auvo import Auvo
 from auvo.auvo_report import *
 import time
@@ -94,6 +95,23 @@ class Tracking(tk.Tk):
         """
         Will insert in the entries the interval that represents the current week
         """
+        today = date.today()
+        day   = today.day
+        month = today.month
+        year  = today.year
+
+        # While the day isn't monday, decrement the day
+        while today.strftime("%a") != "Mon":
+            today = today.replace(day = day - 1)
+            day -= 1
+        
+        # Insert the first day in the entry
+        self.beginInt.delete(0,tk.END)
+        self.beginInt.insert(0,f"{day}/{month}/{year}")
+
+        # Insert the last day in the entry
+        self.endInt.delete(0,tk.END)
+        self.endInt.insert(0,f"{day+4}/{month}/{year}")
 
     def monthInterval(self):
         """
@@ -101,7 +119,7 @@ class Tracking(tk.Tk):
         """
         today = date.today()
         month = today.month
-        year = today.year
+        year  = today.year
 
         # Getting the last day of the month
         next_month = datetime.date(year, month, 1).replace(day=28) + datetime.timedelta(days=4)
