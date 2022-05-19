@@ -103,11 +103,14 @@ class Tracking(tk.Tk):
         month = today.month
         year = today.year
 
+        # Getting the last day of the month
         next_month = datetime.date(year, month, 1).replace(day=28) + datetime.timedelta(days=4)
         last_day =  next_month - datetime.timedelta(days=next_month.day)
 
+        # Insert the first day in the entry
         self.beginInt.delete(0,tk.END)
         self.beginInt.insert(0,f"01/{month}/{year}")
 
+        # Insert the last day in the entry
         self.endInt.delete(0,tk.END)
-        self.endInt.insert(0,last_day)
+        self.endInt.insert(0,last_day.strftime("%d")+f"/{month}/{year}")

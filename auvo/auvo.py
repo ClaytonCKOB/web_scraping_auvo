@@ -11,9 +11,9 @@ import auvo.constants as const
 class Auvo():
     def __init__(self, driver_path=""):
         global driver
-        #driver = webdriver.Chrome(driver_path)
-        #driver.maximize_window()
-        #
+        driver = webdriver.Chrome(driver_path)
+        driver.maximize_window()
+        
     
     def __exit__(self):
         driver.quit()

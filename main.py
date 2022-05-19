@@ -5,6 +5,6 @@ app = Tracking()
 app.mainloop()
 
    
-inst = Auvo('chromedriver.exe')
-inst.getAccessToken()
-inst.getUsers()
+#inst = Auvo('chromedriver.exe')
+#inst.getAccessToken()
+#inst.getUsers()
