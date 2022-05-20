@@ -43,9 +43,9 @@ class Tracking(tk.Tk):
         var = tk.IntVar()
         checkboxes = []
         
-        checkboxes.append(tk.Checkbutton(self, onvalue=1, variable=var, text="Dia", command=self.dayInterval))  
-        checkboxes.append(tk.Checkbutton(self, onvalue=2, variable=var, text="Semana", command=self.weekInterval))  
-        checkboxes.append(tk.Checkbutton(self, onvalue=3, variable=var, text="Mês", command=self.monthInterval))  
+        checkboxes.append(tk.Checkbutton(self, onvalue=1, variable=var, text="Dia", command=self.dayInterval, background="#F6F5F5"))  
+        checkboxes.append(tk.Checkbutton(self, onvalue=2, variable=var, text="Semana", command=self.weekInterval, background="#F6F5F5"))  
+        checkboxes.append(tk.Checkbutton(self, onvalue=3, variable=var, text="Mês", command=self.monthInterval, background="#F6F5F5"))  
     
         checkboxes[0].place(relx=0.18, rely=0.68)
         checkboxes[1].place(relx=0.18, rely=0.73)
@@ -53,7 +53,7 @@ class Tracking(tk.Tk):
 
         # Button to generate the report
         self.btn_generate = tk.Button(self, borderwidth=0, image=self.img_button)
-        self.btn_generate.place(relx=0.18, rely=0.85)
+        self.btn_generate.place(relx=0.18, rely=0.9)
         self.btn_generate['command'] = lambda: self.generateReport(self.beginInt.get(), self.endInt.get(), self.name.get())
     
     def generateReport(self, begin, end, collaborator):
@@ -76,6 +76,7 @@ class Tracking(tk.Tk):
         inst.goToRelatorios()
         df = inst.getIntervalReport(begin, end, collaborator)
         xlsxReport(df)
+        emailReport(df)
     
 
     def dayInterval(self):
@@ -113,7 +114,7 @@ class Tracking(tk.Tk):
         # Getting the last day of the month
         next_month = datetime.date(year, month, 1).replace(day=28) + datetime.timedelta(days=4)
         last_day =  next_month - datetime.timedelta(days=next_month.day)
-        day = day + 4 if day + 4 <= last_day else day + 4 - last_day
+        day = day + 4 if day + 4 <= int(last_day.strftime("%d")) else day + 4 - int(last_day.strftime("%d"))
 
         # Insert the last day in the entry
         self.endInt.delete(0,tk.END)

@@ -7,27 +7,23 @@ import time
 import requests
 import json
 import auvo.constants as const
-import cv2
-from pytesseract import pytesseract
-from pytesseract import Output
-
-pytesseract.tesseract_cmd = f"C:/Users/ti/AppData/Local/Programs/Tesseract-OCR/tesseract.exe"
 
 class Auvo():
     def __init__(self, driver_path=""):
         global driver
         self.driver_path = driver_path
-        #driver = webdriver.Chrome(self.driver_path)
-        #driver.maximize_window()
-        #
+        driver = webdriver.Chrome(self.driver_path)
+        driver.minimize_window()
+        
     
     def __exit__(self):
         driver.quit()
 
     # Method to open the website of booking
     def openSite(self):
+        driver.maximize_window()
         driver.get(const.SITE)
-
+        
 
     def loginAuvo(self):
         """
@@ -201,13 +197,15 @@ class Auvo():
         km_total = float(km_total[:len(km_total)-3] + "." + km_total[len(km_total)-3:])
 
         # Get the data from the questionnaires 
-        self.getTaskInfo(day)
+        paths = self.getTaskInfo(day)
+        beginCar = paths[0] if len(paths) >= 1 else ''
+        endCar = paths[0] if len(paths) >= 2 else ''
 
         # Creating the dict with the info
         data = {
             "Nome": [collaborator.upper()],
-            "Km Inicial Carro": [""],
-            "KM Final Carro": [""],
+            "Km Inicial Carro": [beginCar],
+            "Km Final Carro": [endCar],
             "Km Sistema": [km_sistema],
             "Km Total": [km_total],
             "Data": [day], 
@@ -311,6 +309,7 @@ class Auvo():
 
         """
         ids = self.getTasksId(day)
+        paths = []
 
         headers = {
           'Content-Type': 'application/json',
@@ -321,11 +320,10 @@ class Auvo():
             request = requests.get(f'https://api.auvo.com.br/v2/tasks/{id}', headers=headers)
             request = request.json()
             request = json.loads(json.dumps(dict(request['result']), indent=5))
-            request = request['questionnaires'][0]['answers'][0]['reply']
 
-            image_req = requests.get(request)
+            if request['questionnaires'] != []:
+                request = request['questionnaires'][0]['answers'][0]['reply']
 
-            # Downloading the image of the asnwer
-            file = open(f"images/reports/{id}.png", "wb")
-            file.write(image_req.content)
-            file.close()
+                paths.append(request)
+
+        return paths
