@@ -7,14 +7,19 @@ import time
 import requests
 import json
 import auvo.constants as const
+import cv2
+from pytesseract import pytesseract
+from pytesseract import Output
+
+pytesseract.tesseract_cmd = f"C:/Users/ti/AppData/Local/Programs/Tesseract-OCR/tesseract.exe"
 
 class Auvo():
     def __init__(self, driver_path=""):
         global driver
         self.driver_path = driver_path
-        driver = webdriver.Chrome(self.driver_path)
-        driver.maximize_window()
-        
+        #driver = webdriver.Chrome(self.driver_path)
+        #driver.maximize_window()
+        #
     
     def __exit__(self):
         driver.quit()
@@ -195,6 +200,9 @@ class Auvo():
         km_total = km_total.get_attribute("data-order")
         km_total = float(km_total[:len(km_total)-3] + "." + km_total[len(km_total)-3:])
 
+        # Get the data from the questionnaires 
+        self.getTaskInfo(day)
+
         # Creating the dict with the info
         data = {
             "Nome": [collaborator.upper()],
@@ -245,3 +253,79 @@ class Auvo():
                 users.append(user['name'].upper())
         
         return users
+
+    def getTasksId(self, date):
+        """
+        Will request the list of tasks of the day and will return the ids of the ones that are 
+        related to the km.
+
+        :Args
+            date: String -> represent the day that will be use in the request
+        
+        :Usage
+            getTaskId('20/05/2022')
+
+        """
+        ids = []
+        year = date[-4:]
+        day = date[:2]
+        date = year + '-' + date[3:len(date)-5] + '-' + day     # Converting the format of the date
+
+        # Parameters
+        headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+ self.getAccessToken()
+        }
+
+        paramFilter = {
+            'startDate': date,
+            'endDate': date
+        }
+
+        paramFilter = json.loads(json.dumps(paramFilter))
+
+        # Request
+        request = requests.get(f'https://api.auvo.com.br/v2/tasks/?paramFilter={paramFilter}&page={1}&pageSize={10}&order={"asc"}', headers=headers)
+        
+        # Converting the response to json
+        request = request.json()
+        request = json.loads(json.dumps(dict(request['result']), indent=5))
+        request = request['entityList']
+
+        # Searching for the ids where the word 'veiculo' is included
+        for task in request:
+            if 'VEÍCULO-' in task['customerDescription']:
+                ids.append(task['taskID'])
+
+        return ids
+        
+    def getTaskInfo(self, day):
+        """
+        Will make a request to get the answers of the collaborators from the questionnaire
+        
+        :Args
+            date: String -> represent the day that will be use in the request
+        
+        :Usage
+            getTaskInfo('20/05/2022')
+
+        """
+        ids = self.getTasksId(day)
+
+        headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+ self.getAccessToken()
+        }
+
+        for id in ids:
+            request = requests.get(f'https://api.auvo.com.br/v2/tasks/{id}', headers=headers)
+            request = request.json()
+            request = json.loads(json.dumps(dict(request['result']), indent=5))
+            request = request['questionnaires'][0]['answers'][0]['reply']
+
+            image_req = requests.get(request)
+
+            # Downloading the image of the asnwer
+            file = open(f"images/reports/{id}.png", "wb")
+            file.write(image_req.content)
+            file.close()
