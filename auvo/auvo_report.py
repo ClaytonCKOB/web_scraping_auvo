@@ -1,9 +1,13 @@
 # This file will include functions that will be responsible to organize 
 # the data of the website converting it to xlsx, pdf...
+from email import header
+from h11 import Data
 from pandas import DataFrame
 import pandas as pd
 import auvo.constants as const
 from email.message import EmailMessage
+import requests
+import json
 import smtplib
 
 
@@ -20,6 +24,7 @@ def xlsxReport(df:DataFrame):
     
     # Variables
     name = df['Nome'].iloc[0].lower()
+    name = name[:30] if len(name) >= 31 else name
     df = df.drop(columns=['Nome'])
     writer = pd.ExcelWriter(f"reports/{name}.xlsx", engine='xlsxwriter')
     workbook  = writer.book
@@ -81,6 +86,44 @@ def xlsxReport(df:DataFrame):
 
 def pdfReport(df:DataFrame):
     pass
+
+def postNotion(df:DataFrame):
+    """
+    Will make the integration with the notion
+
+    :Args
+        df: Dataframe -> data from the website 
+    
+    """
+    secret = const.SECRET
+    dbId = const.DB_ID
+
+    url = "https://api.notion.com/v1/databases/"+dbId
+
+    headers = {
+        'Authorization': f'Bearer {secret}',
+        "Accept": "application/json",
+        "Notion-Version": "2022-02-22",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "parent": { "database_id": f'{dbId}' },
+        "properties": {
+            "Name": { 
+                "Nome":[
+                    {
+                        "text": {
+                          "content": "Clayton"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+    
+    response = requests.post(url, headers=headers, json=data)
+    print(response.json())
 
 def emailReport(df:DataFrame):
     """

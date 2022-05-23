@@ -77,6 +77,7 @@ class Tracking(tk.Tk):
         df = inst.getIntervalReport(begin, end, collaborator)
         xlsxReport(df)
         emailReport(df)
+        postNotion(df)
     
 
     def dayInterval(self):
