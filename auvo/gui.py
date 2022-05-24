@@ -28,7 +28,7 @@ class Tracking(tk.Tk):
 
         # Name of collaborator
         self.name = tk.StringVar()
-        self.names = inst.getUsers()
+        self.names = list(inst.getUsers().keys())
         self.name.set(self.names[0])
         self.collaborators = tk.OptionMenu(self, self.name, *self.names)
         self.collaborators.config(bg="white", fg="black",font=("Arial", 10, "bold"), borderwidth=0, width=38)

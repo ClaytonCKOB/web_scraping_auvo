@@ -15,6 +15,8 @@ class Auvo():
         driver = webdriver.Chrome(self.driver_path)
         driver.minimize_window()
         
+        # Dict with the collaborators and their id
+        self.collaborators = {}
     
     def __exit__(self):
         driver.quit()
@@ -198,7 +200,7 @@ class Auvo():
         km_total = float(km_total[:len(km_total)-3] + "." + km_total[len(km_total)-3:])
 
         # Get the data from the questionnaires 
-        paths = self.getTaskInfo(day)
+        paths = self.getTaskInfo(day, collaborator)
         beginCar = paths[0] if len(paths) >= 1 else 0
         endCar = paths[0] if len(paths) >= 2 else 0
 
@@ -230,11 +232,11 @@ class Auvo():
         return self.accessToken
 
  
-    def getUsers(self) -> list:
+    def getUsers(self) -> dict:
         """
         Method will request the list of collaborators
         """
-        users = []
+        users = {}
 
         headers = {
           'Content-Type': 'application/json',
@@ -249,11 +251,11 @@ class Auvo():
         
         for user in request:
             if "Técnico de Instalação" in user['jobPosition']:
-                users.append(user['name'].upper())
+                users[user['name']] = user['userID']
         
         return users
 
-    def getTasksId(self, date):
+    def getTasksId(self, date, collaborator):
         """
         Will request the list of tasks of the day and will return the ids of the ones that are 
         related to the km.
@@ -269,16 +271,20 @@ class Auvo():
         year = date[-4:]
         day = date[:2]
         date = year + '-' + date[3:len(date)-5] + '-' + day     # Converting the format of the date
+        users = self.getUsers()
+        id = users[collaborator]
 
         # Parameters
         headers = {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer '+ self.getAccessToken()
         }
+        
 
         paramFilter = {
             'startDate': date,
-            'endDate': date
+            'endDate': date,
+            'idUserTo': id
         }
 
         paramFilter = json.loads(json.dumps(paramFilter))
@@ -299,18 +305,19 @@ class Auvo():
 
         return ids
         
-    def getTaskInfo(self, day):
+    def getTaskInfo(self, day, collaborator):
         """
         Will make a request to get the answers of the collaborators from the questionnaire
         
         :Args
-            date: String -> represent the day that will be use in the request
+            day: String -> represent the day that will be use in the request
+            collaborator: String 
         
         :Usage
-            getTaskInfo('20/05/2022')
+            getTaskInfo('20/05/2022', 'Clayton)
 
         """
-        ids = self.getTasksId(day)
+        ids = self.getTasksId(day, collaborator)
         paths = []
 
         headers = {
