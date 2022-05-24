@@ -96,34 +96,79 @@ def postNotion(df:DataFrame):
     
     """
     secret = const.SECRET
-    dbId = const.DB_ID
+    pageId = const.DB_ID
 
-    url = "https://api.notion.com/v1/databases/"+dbId
+    url = f'https://api.notion.com/v1/pages'
 
     headers = {
         'Authorization': f'Bearer {secret}',
-        "Accept": "application/json",
         "Notion-Version": "2022-02-22",
         "Content-Type": "application/json"
     }
 
-    data = {
-        "parent": { "database_id": f'{dbId}' },
+    for i in range(len(df)):
+        name = df['Nome'][i]
+        km_inicial = df['Km Inicial Carro'][i]
+        km_final =   df['Km Final Carro'][i]
+        km_sistema = df['Km Sistema'][i]
+        km_total =   df['Km Total'][i]
+        date =       df['Data'][i]
+        comparativo =df['Comparativo'][i]
+
+        data = {
+        "parent":{
+            "database_id": pageId
+        },
         "properties": {
-            "Name": { 
-                "Nome":[
-                    {
-                        "text": {
-                          "content": "Clayton"
-                        }
-                    }
-                ]
-            }
-        }
-    }
+          "Nome": {
+            "title": [
+              {
+                "text": {
+                  "content": name
+                }   
+              }
+            ]
+          },
+          "Km Inicial Carro": {
+            "rich_text": [
+              {
+                "text": {
+                  "content": km_inicial
+                }   
+              }
+            ]
+          },
+          "Km Final Carro": {
+            "rich_text": [
+              {
+                "text": {
+                  "content": km_final
+                }   
+              }
+            ]
+          },
+          "Km Sistema": {
+            "number": km_sistema
+          },
+          "Km Total": {
+            "number": km_total
+          },
+          "Data": {
+            "rich_text": [
+              {
+                "text": {
+                  "content": date
+                }   
+              }
+            ]
+          },
+          "Comparativo": {
+            "number": comparativo
+          },
+        }}
     
-    response = requests.post(url, headers=headers, json=data)
-    print(response.json())
+        response = requests.post(url, json=json.loads(json.dumps(data)), headers=headers)
+        print(response.json())
 
 def emailReport(df:DataFrame):
     """
@@ -149,7 +194,8 @@ def emailReport(df:DataFrame):
     msg['To'] = const.TO_EMAIL
 
     for i in range(len(df)):
-        if df['Comparativo'][i] < -2:
+        comp = df['Comparativo'][i]
+        if comp < -2:
             divergence_records += f""" <tr><td>{df['Nome'][i]}</td><td>{df['Km Inicial Carro'][i]}</td><td>{df['Km Final Carro'][i]}</td><td>{df['Km Sistema'][i]}</td><td>{df['Km Total'][i]}</td><td>{df['Data'][i]}</td><td>{df['Comparativo'][i]}</td></tr> """
 
     # If there are negative records, send them to email

@@ -81,7 +81,8 @@ class Auvo():
             time.sleep(7)
             data = pd.concat([data, self.getReportData(str(day)+"/"+end[1]+"/"+end[2], collaborator)], axis=0)
             day += 1
-        
+        data = data.reset_index()
+        print(data)
         return data
 
     def selectDailyReport(self, day, collaborator):
@@ -198,8 +199,8 @@ class Auvo():
 
         # Get the data from the questionnaires 
         paths = self.getTaskInfo(day)
-        beginCar = paths[0] if len(paths) >= 1 else ''
-        endCar = paths[0] if len(paths) >= 2 else ''
+        beginCar = paths[0] if len(paths) >= 1 else 0
+        endCar = paths[0] if len(paths) >= 2 else 0
 
         # Creating the dict with the info
         data = {
@@ -285,15 +286,16 @@ class Auvo():
         # Request
         request = requests.get(f'https://api.auvo.com.br/v2/tasks/?paramFilter={paramFilter}&page={1}&pageSize={10}&order={"asc"}', headers=headers)
         
-        # Converting the response to json
-        request = request.json()
-        request = json.loads(json.dumps(dict(request['result']), indent=5))
-        request = request['entityList']
+        if request.status_code != 404:
+            # Converting the response to json
+            request = request.json()
+            request = json.loads(json.dumps(dict(request['result']), indent=5))
+            request = request['entityList']
 
-        # Searching for the ids where the word 'veiculo' is included
-        for task in request:
-            if 'VEÍCULO-' in task['customerDescription']:
-                ids.append(task['taskID'])
+            # Searching for the ids where the word 'veiculo' is included
+            for task in request:
+                if 'VEÍCULO-' in task['customerDescription']:
+                    ids.append(task['taskID'])
 
         return ids
         
