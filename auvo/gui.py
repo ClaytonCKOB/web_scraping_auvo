@@ -136,7 +136,7 @@ class Tracking(tk.Tk):
 
         # Insert the first day in the entry
         self.beginInt.delete(0,tk.END)
-        self.beginInt.insert(0,f"01/{month}/{year}")
+        self.beginInt.insert(0,f"01/0{month}/{year}")
 
         # Insert the last day in the entry
         self.endInt.delete(0,tk.END)

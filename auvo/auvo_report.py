@@ -25,7 +25,7 @@ def xlsxReport(df:DataFrame):
     # Variables
     name = df['Nome'].iloc[0].lower()
     name = name[:30] if len(name) >= 31 else name
-    df = df.drop(columns=['Nome'])
+    df = df.drop(columns=['Nome', 'index'])
     writer = pd.ExcelWriter(f"reports/{name}.xlsx", engine='xlsxwriter')
     workbook  = writer.book
     
@@ -108,12 +108,12 @@ def postNotion(df:DataFrame):
 
     for i in range(len(df)):
         name = df['Nome'][i]
-        km_inicial = df['Km Inicial Carro'][i]
-        km_final =   df['Km Final Carro'][i]
-        km_sistema = df['Km Sistema'][i]
-        km_total =   df['Km Total'][i]
+        km_inicial = float(df['Km Inicial Carro'][i])
+        km_final =   float(df['Km Final Carro'][i])
+        km_sistema = float(df['Km Sistema'][i])
+        km_total =   float(df['Km Total'][i])
         date =       df['Data'][i]
-        comparativo =df['Comparativo'][i]
+        comparativo =round(float(df['Comparativo'][i])*100)/100
 
         data = {
         "parent":{
@@ -130,22 +130,12 @@ def postNotion(df:DataFrame):
             ]
           },
           "Km Inicial Carro": {
-            "rich_text": [
-              {
-                "text": {
-                  "content": km_inicial
-                }   
-              }
-            ]
+            "number": km_inicial
+               
           },
           "Km Final Carro": {
-            "rich_text": [
-              {
-                "text": {
-                  "content": km_final
-                }   
-              }
-            ]
+            "number": km_final
+              
           },
           "Km Sistema": {
             "number": km_sistema

@@ -3,6 +3,8 @@ from pandas import DataFrame
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+import datetime
+from datetime import date
 import time
 import requests
 import json
@@ -76,13 +78,24 @@ class Auvo():
         begin = begin.split("/")
         end = end.split("/")
         day = int(begin[0])
+        month = int(begin[1])
         data = pd.DataFrame()
 
-        while day <= int(end[0]):
-            self.selectDailyReport(str(day)+"/"+end[1]+"/"+end[2], collaborator)
+        # Getting the last day of the month
+        next_month = datetime.date(int(begin[2]), int(begin[1]), 1).replace(day=28) + datetime.timedelta(days=4)
+        last_day =  next_month - datetime.timedelta(days=next_month.day)
+        last_day = last_day.strftime("%d")
+
+        while (begin[1] == end[1] and day <= int(end[0])) or (begin[1] != end[1] and day != int(end[0]) + 1):
+            self.selectDailyReport(str(day)+"/"+str(month)+"/"+end[2], collaborator)
             time.sleep(7)
-            data = pd.concat([data, self.getReportData(str(day)+"/"+end[1]+"/"+end[2], collaborator)], axis=0)
-            day += 1
+            data = pd.concat([data, self.getReportData(str(day)+"/"+str(month)+"/"+end[2], collaborator)], axis=0)
+            if day + 1 <= int(last_day):
+                day += 1
+            else:
+                day = 1
+                month += 1
+
         data = data.reset_index()
 
         return data
@@ -152,7 +165,7 @@ class Auvo():
 
         while int(month_in_num) != int(date[1]):
             if int(month_in_num) < int(date[1]):
-                next_element = driver.find_element(By.CLASS_NAME, "next")
+                next_element = driver.find_element(By.XPATH, "/html/body/div[5]/div[1]/table/thead/tr[2]/th[3]")
                 next_element.click()
             else:
                 prev_element = driver.find_element(By.CLASS_NAME, "prev")
@@ -200,9 +213,9 @@ class Auvo():
         km_total = float(km_total[:len(km_total)-3] + "." + km_total[len(km_total)-3:])
 
         # Get the data from the questionnaires 
-        paths = self.getTaskInfo(day, collaborator)
-        beginCar = paths[0] if len(paths) >= 1 else 0
-        endCar = paths[0] if len(paths) >= 2 else 0
+        mileage = self.getTaskInfo(day, collaborator)
+        beginCar = mileage[0] if len(mileage) >= 1 and (isinstance(mileage[0], int) or isinstance(mileage[0], float)) else 0
+        endCar = mileage[1] if len(mileage) >= 2 and (isinstance(mileage[1], int) or isinstance(mileage[1], float)) else 0
 
         # Creating the dict with the info
         data = {
@@ -212,7 +225,7 @@ class Auvo():
             "Km Sistema": [km_sistema],
             "Km Total": [km_total],
             "Data": [day], 
-            "Comparativo": [km_sistema - km_total]
+            "Comparativo": [km_total - (endCar - beginCar)]
         }
 
         return pd.DataFrame(data)
@@ -292,7 +305,7 @@ class Auvo():
         # Request
         request = requests.get(f'https://api.auvo.com.br/v2/tasks/?paramFilter={paramFilter}&page={1}&pageSize={10}&order={"asc"}', headers=headers)
         
-        if request.status_code != 404:
+        if request.status_code < 400 :
             # Converting the response to json
             request = request.json()
             request = json.loads(json.dumps(dict(request['result']), indent=5))
@@ -318,7 +331,7 @@ class Auvo():
 
         """
         ids = self.getTasksId(day, collaborator)
-        paths = []
+        mileage = []
 
         headers = {
           'Content-Type': 'application/json',
@@ -333,6 +346,6 @@ class Auvo():
             if request['questionnaires'] != []:
                 request = request['questionnaires'][0]['answers'][0]['reply']
 
-                paths.append(request)
+                mileage.append(request)
 
-        return paths
+        return mileage
