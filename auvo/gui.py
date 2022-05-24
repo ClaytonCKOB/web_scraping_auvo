@@ -13,6 +13,7 @@ class Tracking(tk.Tk):
         inst = Auvo("chromedriver.exe")
         super().__init__()
 
+        self.iconbitmap(f'images\iconTracking.ico')
         self.img_button = ImageTk.PhotoImage(Image.open(r"images\btn.jpg"))
         self.img_bg     = ImageTk.PhotoImage(Image.open(r"images\base.jpg"))
 

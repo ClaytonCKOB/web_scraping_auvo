@@ -82,7 +82,7 @@ class Auvo():
             data = pd.concat([data, self.getReportData(str(day)+"/"+end[1]+"/"+end[2], collaborator)], axis=0)
             day += 1
         data = data.reset_index()
-        print(data)
+
         return data
 
     def selectDailyReport(self, day, collaborator):

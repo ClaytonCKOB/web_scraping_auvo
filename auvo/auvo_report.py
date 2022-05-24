@@ -167,8 +167,7 @@ def postNotion(df:DataFrame):
           },
         }}
     
-        response = requests.post(url, json=json.loads(json.dumps(data)), headers=headers)
-        print(response.json())
+        requests.post(url, json=json.loads(json.dumps(data)), headers=headers)
 
 def emailReport(df:DataFrame):
     """
