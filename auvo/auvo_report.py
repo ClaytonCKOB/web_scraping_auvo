@@ -1,7 +1,5 @@
 # This file will include functions that will be responsible to organize 
 # the data of the website converting it to xlsx, pdf...
-from email import header
-from h11 import Data
 from pandas import DataFrame
 import pandas as pd
 import auvo.constants as const
