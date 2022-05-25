@@ -13,6 +13,12 @@ class Tracking(tk.Tk):
         self.auvo = Auvo("chromedriver.exe")
         super().__init__()
 
+        screen_width = self.winfo_screenwidth()
+        screen_heigth = self.winfo_screenheight()
+
+        # Configuring size of the window
+        self.geometry(f"450x550+{int((screen_width - 450)/2)}+{int((screen_heigth - 550)/2)}")
+
         self.iconbitmap(f'images\iconTracking.ico')
         self.img_button = ImageTk.PhotoImage(Image.open(r"images\btn.jpg"))
         self.img_bg     = ImageTk.PhotoImage(Image.open(r"images\base.jpg"))
@@ -22,9 +28,6 @@ class Tracking(tk.Tk):
 
         # Title
         self.title("Tracking")
-
-        # Configuring size of the window
-        self.geometry("450x550")
 
         # Name of collaborator
         self.name = tk.StringVar()
@@ -62,6 +65,9 @@ class Tracking(tk.Tk):
         self.btn_generate.place(relx=0.18, rely=0.9)
         self.btn_generate['command'] = lambda: self.generateReport(self.beginInt.get(), self.endInt.get(), self.name.get())
     
+    def __exit__(self):
+        self.auvo.__exit__()
+
     def generateReport(self, begin, end, collaborator):
         """
         Will generate the report with the informations of the graphic interface
