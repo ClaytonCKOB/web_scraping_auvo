@@ -17,6 +17,8 @@ class Auvo():
         driver = webdriver.Chrome(self.driver_path)
         driver.minimize_window()
         
+        self.site_open = False
+
         # Dict with the collaborators and their id
         self.collaborators = {}
     
@@ -27,6 +29,7 @@ class Auvo():
     def openSite(self):
         driver.maximize_window()
         driver.get(const.SITE)
+        self.site_open = True
         
 
     def loginAuvo(self):
@@ -214,8 +217,8 @@ class Auvo():
 
         # Get the data from the questionnaires 
         mileage = self.getTaskInfo(day, collaborator)
-        beginCar = mileage[0] if len(mileage) >= 1 and (isinstance(mileage[0], int) or isinstance(mileage[0], float)) else 0
-        endCar = mileage[1] if len(mileage) >= 2 and (isinstance(mileage[1], int) or isinstance(mileage[1], float)) else 0
+        beginCar = int(mileage[0]) if len(mileage) >= 1 and ('www' not in mileage[0].split('.') and 'apresentou' not in mileage[0].split(' ')) else 0
+        endCar = int(mileage[1]) if len(mileage) >= 2 and ('www' not in mileage[1].split('.') and 'apresentou' not in mileage[1].split(' ')) else 0
 
         # Creating the dict with the info
         data = {
@@ -275,9 +278,10 @@ class Auvo():
 
         :Args
             date: String -> represent the day that will be use in the request
+            collaborator: String
         
         :Usage
-            getTaskId('20/05/2022')
+            getTaskId('20/05/2022', 'clayton)
 
         """
         ids = []
@@ -344,7 +348,7 @@ class Auvo():
             request = json.loads(json.dumps(dict(request['result']), indent=5))
 
             if request['questionnaires'] != []:
-                request = request['questionnaires'][0]['answers'][0]['reply']
+                request = request['questionnaires'][0]['answers'][1]['reply']
 
                 mileage.append(request)
 

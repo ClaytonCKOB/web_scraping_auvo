@@ -10,7 +10,7 @@ from PIL import ImageTk, Image
 
 class Tracking(tk.Tk):
     def __init__(self):
-        inst = Auvo("chromedriver.exe")
+        self.auvo = Auvo("chromedriver.exe")
         super().__init__()
 
         self.iconbitmap(f'images\iconTracking.ico')
@@ -28,7 +28,7 @@ class Tracking(tk.Tk):
 
         # Name of collaborator
         self.name = tk.StringVar()
-        self.names = list(inst.getUsers().keys())
+        self.names = list(self.auvo.getUsers().keys())
         self.name.set(self.names[0])
         self.collaborators = tk.OptionMenu(self, self.name, *self.names)
         self.collaborators.config(bg="white", fg="black",font=("Arial", 10, "bold"), borderwidth=0, width=38)
@@ -52,6 +52,11 @@ class Tracking(tk.Tk):
         checkboxes[1].place(relx=0.18, rely=0.73)
         checkboxes[2].place(relx=0.18, rely=0.78)
 
+        # Warning Label
+        self.warning_text = tk.StringVar()
+        self.warning_label = tk.Label(self, textvariable=self.warning_text, font=('Arial', 8), fg='red', background='#F6F5F5')
+        self.warning_label.place(relx=0.18, rely=0.84)
+
         # Button to generate the report
         self.btn_generate = tk.Button(self, borderwidth=0, image=self.img_button)
         self.btn_generate.place(relx=0.18, rely=0.9)
@@ -70,16 +75,39 @@ class Tracking(tk.Tk):
             generateReport("16/05/2022", "18/05/2022", "clayton")
             
         """
+        begin_day =   int(begin.split('/')[0])
+        begin_month = int(begin.split('/')[1])
+        begin_year =  int(begin.split('/')[2])
+        last_day_begin = self.getLastDayMonth(int(begin_month), int(begin_year))
 
-        inst = Auvo("chromedriver.exe")
-        inst.openSite()
-        inst.loginAuvo()
-        inst.goToRelatorios()
-        df = inst.getIntervalReport(begin, end, collaborator)
-        xlsxReport(df)
-        emailReport(df)
-        postNotion(df)
-    
+        end_day =   int(end.split('/')[0])
+        end_month = int(end.split('/')[1])
+        end_year =  int(end.split('/')[2])
+        last_day_end = self.getLastDayMonth(int(end_month), int(end_year))
+
+        # Verifing if the interval is correct
+        # The year of the begin must be less or equal of the end's year
+        # if the interval is in the same month, the begin's day must be less or equal of the end's day
+        # if the interval is in different months, then the begin's month must be previous than the end's month
+        # The day of the interval must be less or equal to the last day of the month
+
+        if (begin_year <= end_year) and ((begin_month == end_month and begin_day <= end_day) or (begin_month < end_month)) and (begin_day <= last_day_begin and end_day <= last_day_end):
+            self.warning_text.set("")
+
+            if not self.auvo.site_open:
+                self.auvo.openSite()
+                self.auvo.loginAuvo()
+                self.auvo.goToRelatorios()
+            
+            df = self.auvo.getIntervalReport(begin, end, collaborator)
+
+            xlsxReport(df)
+            emailReport(df)
+            postNotion(df)
+        else:
+            # If it is not valid, alert the user
+            self.warning_text.set("Atenção: Insira valores válidos.")
+            
 
     def dayInterval(self):
         """
@@ -114,9 +142,8 @@ class Tracking(tk.Tk):
         self.beginInt.insert(0,f"{day}/{month}/{year}")
 
         # Getting the last day of the month
-        next_month = datetime.date(year, month, 1).replace(day=28) + datetime.timedelta(days=4)
-        last_day =  next_month - datetime.timedelta(days=next_month.day)
-        day = day + 4 if day + 4 <= int(last_day.strftime("%d")) else day + 4 - int(last_day.strftime("%d"))
+        last_day =  self.getLastDayMonth(month, year)
+        day = day + 4 if day + 4 <= last_day else day + 4 - last_day
 
         # Insert the last day in the entry
         self.endInt.delete(0,tk.END)
@@ -131,8 +158,7 @@ class Tracking(tk.Tk):
         year  = today.year
 
         # Getting the last day of the month
-        next_month = datetime.date(year, month, 1).replace(day=28) + datetime.timedelta(days=4)
-        last_day =  next_month - datetime.timedelta(days=next_month.day)
+        last_day = self.getLastDayMonth(month, year)
 
         # Insert the first day in the entry
         self.beginInt.delete(0,tk.END)
@@ -140,4 +166,23 @@ class Tracking(tk.Tk):
 
         # Insert the last day in the entry
         self.endInt.delete(0,tk.END)
-        self.endInt.insert(0,last_day.strftime("%d")+f"/{month}/{year}")
+        self.endInt.insert(0,str(last_day)+f"/{month}/{year}")
+
+    def getLastDayMonth(self, month:int, year:int) -> int:
+        """
+        Will return the last day of the month
+
+        :Args
+            month: int
+            year: int
+
+        :Usage
+            getLastDayMont(5, 2022)
+        """
+
+        # Getting the last day of the month
+        next_month = datetime.date(year, month, 1).replace(day=28) + datetime.timedelta(days=4)
+        last_day =  next_month - datetime.timedelta(days=next_month.day)
+        last_day = int(last_day.strftime("%d"))
+
+        return last_day
