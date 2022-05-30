@@ -1,7 +1,7 @@
 # This file contains the graphic configurations
-from calendar import day_abbr
 from auvo.auvo import Auvo
 from auvo.auvo_report import *
+import selenium
 import time
 import datetime
 from datetime import date
@@ -99,17 +99,18 @@ class Tracking(tk.Tk):
 
         if (begin_year <= end_year) and ((begin_month == end_month and begin_day <= end_day) or (begin_month < end_month)) and (begin_day <= last_day_begin and end_day <= last_day_end):
             self.warning_text.set("")
-
+            
             if not self.auvo.site_open:
                 self.auvo.openSite()
                 self.auvo.loginAuvo()
                 self.auvo.goToRelatorios()
-            
+                
             df = self.auvo.getIntervalReport(begin, end, collaborator)
-
             xlsxReport(df)
             emailReport(df)
             postNotion(df)
+            
+            
         else:
             # If it is not valid, alert the user
             self.warning_text.set("Atenção: Insira valores válidos.")

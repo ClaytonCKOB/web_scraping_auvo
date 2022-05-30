@@ -16,7 +16,7 @@ class Auvo():
         self.driver_path = driver_path
         driver = webdriver.Chrome(self.driver_path)
         driver.minimize_window()
-        
+
         self.site_open = False
 
         # Dict with the collaborators and their id
@@ -91,7 +91,7 @@ class Auvo():
 
         while (begin[1] == end[1] and day <= int(end[0])) or (begin[1] != end[1] and day != int(end[0]) + 1):
             self.selectDailyReport(str(day)+"/"+str(month)+"/"+end[2], collaborator)
-            time.sleep(7)
+            time.sleep(8)
             data = pd.concat([data, self.getReportData(str(day)+"/"+str(month)+"/"+end[2], collaborator)], axis=0)
             if day + 1 <= int(last_day):
                 day += 1
