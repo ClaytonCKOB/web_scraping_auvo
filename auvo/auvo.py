@@ -227,7 +227,7 @@ class Auvo():
             "Km Sistema": [km_sistema],
             "Km Total": [km_total],
             "Data": [day], 
-            "Comparativo": [km_total - (endCar - beginCar)]
+            "Comparativo": [km_sistema - km_total]
         }
 
         return pd.DataFrame(data)
