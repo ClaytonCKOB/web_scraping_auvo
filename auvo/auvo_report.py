@@ -24,7 +24,7 @@ def xlsxReport(df:DataFrame):
     name = df['Nome'].iloc[0].lower()
     name = name[:30] if len(name) >= 31 else name
     df = df.drop(columns=['Nome', 'index'])
-    writer = pd.ExcelWriter(f"reports/{name}.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter(f"{const.BASE_DIR}/reports/{name}.xlsx", engine='xlsxwriter')
     workbook  = writer.book
     
 
@@ -82,8 +82,6 @@ def xlsxReport(df:DataFrame):
 
     writer.save()
 
-def pdfReport(df:DataFrame):
-    pass
 
 def postNotion(df:DataFrame):
     """

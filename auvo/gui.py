@@ -1,7 +1,7 @@
 # This file contains the graphic configurations
 from auvo.auvo import Auvo
 from auvo.auvo_report import *
-import selenium
+import auvo.constants as const
 import time
 import datetime
 from datetime import date
@@ -10,7 +10,7 @@ from PIL import ImageTk, Image
 
 class Tracking(tk.Tk):
     def __init__(self):
-        self.auvo = Auvo("chromedriver.exe")
+        self.auvo = Auvo(f"{const.BASE_DIR}\chromedriver.exe")
         super().__init__()
 
         screen_width = self.winfo_screenwidth()
@@ -19,9 +19,9 @@ class Tracking(tk.Tk):
         # Configuring size of the window
         self.geometry(f"450x550+{int((screen_width - 450)/2)}+{int((screen_heigth - 550)/2)}")
 
-        self.iconbitmap(f'images\iconTracking.ico')
-        self.img_button = ImageTk.PhotoImage(Image.open(r"images\btn.jpg"))
-        self.img_bg     = ImageTk.PhotoImage(Image.open(r"images\base.jpg"))
+        self.iconbitmap(f'{const.BASE_DIR}\images\iconTracking.ico')
+        self.img_button = ImageTk.PhotoImage(Image.open(f"{const.BASE_DIR}\images\btn.jpg"))
+        self.img_bg     = ImageTk.PhotoImage(Image.open(f"{const.BASE_DIR}\images\base.jpg"))
 
         self.mainFrame = tk.Label(self, image=self.img_bg)
         self.mainFrame.place(width=450, height=550)
