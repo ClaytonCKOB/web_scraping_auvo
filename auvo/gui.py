@@ -20,8 +20,8 @@ class Tracking(tk.Tk):
         self.geometry(f"450x550+{int((screen_width - 450)/2)}+{int((screen_heigth - 550)/2)}")
 
         self.iconbitmap(f'{const.BASE_DIR}\images\iconTracking.ico')
-        self.img_button = ImageTk.PhotoImage(Image.open(f"{const.BASE_DIR}\images\btn.jpg"))
-        self.img_bg     = ImageTk.PhotoImage(Image.open(f"{const.BASE_DIR}\images\base.jpg"))
+        self.img_button = ImageTk.PhotoImage(Image.open(str(const.BASE_DIR)+r"\images\btn.jpg"))
+        self.img_bg     = ImageTk.PhotoImage(Image.open(str(const.BASE_DIR)+r"\images\base.jpg"))
 
         self.mainFrame = tk.Label(self, image=self.img_bg)
         self.mainFrame.place(width=450, height=550)
@@ -141,12 +141,16 @@ class Tracking(tk.Tk):
 
         # While the day isn't monday, decrement the day
         while today.strftime("%a") != "Mon":
-            today = today.replace(day = day - 1)
-            day -= 1
+            if day == 1:
+                day = self.getLastDayMonth(month - 1, year)
+                today = today.replace(day = day, month=month-1)
+            else:
+                today = today.replace(day = day - 1)
+                day -= 1
         
         # Insert the first day in the entry
         self.beginInt.delete(0,tk.END)
-        self.beginInt.insert(0,f"{day}/{month}/{year}")
+        self.beginInt.insert(0,f"{day}/{today.month}/{year}")
 
         # Getting the last day of the month
         last_day =  self.getLastDayMonth(month, year)

@@ -316,7 +316,7 @@ class Auvo():
 
             # Searching for the ids where the word 'veiculo' is included
             for task in request:
-                if 'VEÍCULO-' in task['customerDescription']:
+                if 'VEÍCULO-' in task['customerDescription'] or 'VEÍCULO' in task['customerDescription']:
                     ids.append(task['taskID'])
 
         return ids
