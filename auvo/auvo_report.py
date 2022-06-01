@@ -174,82 +174,78 @@ def emailReport(df:DataFrame):
     css_style = ""
     divergence_records = ""
 
-    msg['Subject'] = "Divergência de Valores"
+    msg['Subject'] = "Relatório Semanal da Quilometragem"
     msg['From'] = sender
     msg['To'] = const.TO_EMAIL
 
     for i in range(len(df)):
-        comp = df['Comparativo'][i]
-        if comp < -2:
-            divergence_records += f""" <tr><td>{df['Nome'][i]}</td><td>{df['Km Inicial Carro'][i]}</td><td>{df['Km Final Carro'][i]}</td><td>{df['Km Sistema'][i]}</td><td>{df['Km Total'][i]}</td><td>{df['Data'][i]}</td><td>{df['Comparativo'][i]}</td></tr> """
+        bg = 'red' if float(df['Comparativo'][i]) <= -2 else '#58BB43'
+        divergence_records += f""" <tr bgcolor={bg}><td>{df['Nome'][i]}</td><td>{df['Km Inicial Carro'][i]}</td><td>{df['Km Final Carro'][i]}</td><td>{df['Km Sistema'][i]}</td><td>{df['Km Total'][i]}</td><td>{df['Data'][i]}</td><td>{df['Comparativo'][i]}</td></tr> """
 
-    # If there are negative records, send them to email
-    if divergence_records != "":
-        # Estilo css que será adicionado ao corpo do e-mail
-        css_style = """
-        body{
-            background-color: #eff3f6;
-            font-family: 'Arial';
-            padding: 40px;
-        }   
-        #info-itens{
-            border-collapse: collapse;
-            margin-top: 50px;
-            margin-bottom: 50px;
-            margin-left: auto;
-            margin-right: auto;
-            font-size: 0.9em;
-        }   
-        #info-itens thead tr{
-            background-color: #3c3c3c;
-            color: #fff;
-            text-align: left;
-            font-weight: bold;
-        }   
-        #info-itens th,
-        #info-itens td{
-            padding: 12px 15px;
-        }   
-        #info-itens tbody tr{
-            border-bottom: 1px solid #ddd;
-        }   
-        #info-itens tbody tr:nth-of-type(even){
-            background-color: white;
-        }
-        """ 
+    
+    # Estilo css que será adicionado ao corpo do e-mail
+    css_style = """
+    body{
+        background-color: #eff3f6;
+        font-family: 'Arial';
+        padding: 40px;
+    }   
+    #info-itens{
+        border-collapse: collapse;
+        margin-top: 50px;
+        margin-bottom: 50px;
+        margin-left: auto;
+        margin-right: auto;
+        font-size: 0.9em;
+    }   
+    #info-itens thead tr{
+        background-color: #3c3c3c;
+        color: #fff;
+        text-align: left;
+        font-weight: bold;
+    }   
+    #info-itens th,
+    #info-itens td{
+        padding: 12px 15px;
+    }   
+    #info-itens tbody tr{
+        border-bottom: 1px solid #ddd;
+        color: #fff;
+    }   
+    """ 
 
-        # HMTL code of the email
-        msg.add_alternative(f"""
-        <!DOCTYPE html>
-        <html>
-            <style>
-                {css_style}
-            </style>
-            <body>
-                    <div id=tabela>
-                        <table id=info-itens>
-                            <thead>
-                                <tr>
-                                    <th>Nome</th>
-                                    <th>Km Inicial Carro</th>
-                                    <th>Km Final Carro</th>
-                                    <th>Km Sistema</th>
-                                    <th>Km Total</th>
-                                    <th>Data</th>
-                                    <th>Comparativo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {divergence_records}
-                            </tbody>
-                        </table>
-                    </div>
-            </body>
-        </html>
-        """, subtype='html')    
+    # HMTL code of the email
+    msg.add_alternative(f"""
+    <!DOCTYPE html>
+    <html>
+        <style>
+            {css_style}
+        </style>
+        <body>
+                <div id=tabela>
+                    <table id=info-itens>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Km Inicial Carro</th>
+                                <th>Km Final Carro</th>
+                                <th>Km Sistema</th>
+                                <th>Km Total</th>
+                                <th>Data</th>
+                                <th>Comparativo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {divergence_records}
+                        </tbody>
+                    </table>
+                </div>
+        </body>
+    </html>
+    """, subtype='html')    
         
-        # Send email
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(sender, password)
-        server.send_message(msg)
+    # Send email
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(sender, password)
+    server.send_message(msg)
