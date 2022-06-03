@@ -109,7 +109,7 @@ def postNotion(df:DataFrame):
         km_sistema = float(df['Km Sistema'][i])
         km_total =   float(df['Km Total'][i])
         date =       df['Data'][i]
-        comparativo =round(float(df['Comparativo'][i])*100)/100
+        comparativo =round(float(df['Comp. Auvo'][i])*100)/100
 
         data = {
         "parent":{
@@ -179,7 +179,7 @@ def emailReport(df:DataFrame):
     msg['To'] = const.TO_EMAIL
 
     for i in range(len(df)):
-        bg = 'red' if float(df['Comparativo'][i]) <= -2 else '#58BB43'
+        bg = 'red' if float(df['Comp. Auvo'][i]) <= -2 else '#58BB43'
         divergence_records += f""" <tr bgcolor={bg}><td>{df['Nome'][i]}</td><td>{df['Km Inicial Carro'][i]}</td><td>{df['Km Final Carro'][i]}</td><td>{df['Km Sistema'][i]}</td><td>{df['Km Total'][i]}</td><td>{df['Data'][i]}</td><td>{df['Comp. Auvo'][i]}</td><td>{df['Comp. Veículo'][i]}</td></tr> """
 
     

@@ -65,7 +65,7 @@ class Auvo():
         opKmRodado.click()
 
     
-    def getIntervalReport(self, begin, end, collaborator) -> DataFrame:
+    def getIntervalReport(self, begin, end, collaborator, is_collab) -> DataFrame:
         """
         Will collect the data in the defined interval
 
@@ -89,9 +89,9 @@ class Auvo():
         last_day = last_day.strftime("%d")
 
         while (begin[1] == end[1] and day <= int(end[0])) or (begin[1] != end[1] and day != int(end[0]) + 1):
-            self.selectDailyReport(str(day)+"/"+str(month)+"/"+end[2], collaborator)
+            self.selectDailyReport(str(day)+"/"+str(month)+"/"+end[2], collaborator, is_collab)
             time.sleep(8)
-            data = pd.concat([data, self.getReportData(str(day)+"/"+str(month)+"/"+end[2], collaborator)], axis=0)
+            data = pd.concat([data, self.getReportData(str(day)+"/"+str(month)+"/"+end[2], collaborator, is_collab)], axis=0)
             if day + 1 <= int(last_day):
                 day += 1
             else:
@@ -102,7 +102,7 @@ class Auvo():
 
         return data
 
-    def selectDailyReport(self, day, collaborator):
+    def selectDailyReport(self, day, collaborator, is_collab):
         """
         Will generate the report of the collaborator in the specified day
 
@@ -129,13 +129,30 @@ class Auvo():
         self.selectDayinTable(day)
 
 
-        # Select the collaborator
-        collab_element = driver.find_element(By.ID, "select2-listaColaboradores-container")
-        collab_element.click()
-        collab_search_element = driver.find_element(By.CLASS_NAME, "select2-search__field")
-        collab_search_element.click()
-        collab_search_element.send_keys(collaborator)
-        collab_search_element.send_keys(Keys.ENTER)
+        
+        # Configuring the filter 
+        filter_element = driver.find_element(By.ID, "select2-filtrarPor-container")
+        filter_element.click()
+        filter_input = driver.find_element(By.CLASS_NAME, "select2-search__field")
+
+        if is_collab:
+            # Select the collaborator
+            filter_input.send_keys("Colaborador")
+            filter_input.send_keys(Keys.ENTER)
+            collab_element = driver.find_element(By.ID, "select2-listaColaboradores-container")
+            collab_element.click()
+            
+        else:
+            filter_input.send_keys("Equipe")
+            filter_input.send_keys(Keys.ENTER)
+
+            user_search_element = driver.find_element(By.ID, "select2-listaEquipes-container")
+            user_search_element.click()
+
+        user_search_element = driver.find_element(By.CLASS_NAME, "select2-search__field")
+        user_search_element.click()
+        user_search_element.send_keys(collaborator)
+        user_search_element.send_keys(Keys.ENTER)
 
         # Click the submit button
         btn_get_report = driver.find_element(By.ID, "gerarConsulta")
@@ -190,7 +207,7 @@ class Auvo():
                     td_y += 1
 
 
-    def getReportData(self, day, collaborator) -> DataFrame:
+    def getReportData(self, day, collaborator, is_collab) -> DataFrame:
         """
         Will get the atributes of the report
 
@@ -203,22 +220,45 @@ class Auvo():
         """
         driver.implicitly_wait(20)
 
-        # Finding the elements
-        km_sistema = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr/td[3]')
-        km_total = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr/td[5]')
+        if is_collab:
+            # Finding the elements
+            km_sistema = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr/td[3]')
+            km_total = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr/td[5]')
+            collab = collaborator
+        else:
+            # When it is a team the program needs to get the higher values
+            first_km_total = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr/td[5]')
+            second_km_total = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr[2]/td[5]')
+            
+            first_km_total = first_km_total.get_attribute("data-order")
+            first_km_total = float(first_km_total[:len(first_km_total)-3] + "." + first_km_total[len(first_km_total)-3:])
+
+            second_km_total = second_km_total.get_attribute("data-order")
+            second_km_total = float(second_km_total[:len(second_km_total)-3] + "." + second_km_total[len(second_km_total)-3:])
+
+            if first_km_total > second_km_total:
+                km_sistema = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr/td[3]')
+                km_total = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr/td[5]')
+
+            else:
+                km_sistema = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr[2]/td[3]')
+                km_total = driver.find_element(By.XPATH, '//*[@id="table"]/tbody/tr[2]/td[5]')
+
+            collab = "Thiago Costa"
+
 
         # Treating each value
         km_sistema = km_sistema.get_attribute("data-order")
-        km_sistema = float(km_sistema[:len(km_sistema)-3] + "." + km_sistema[len(km_sistema)-3:])
-
+        km_sistema = float(km_sistema[:len(km_sistema)-3] + "." + km_sistema[len(km_sistema)-3:])       
         km_total = km_total.get_attribute("data-order")
-        km_total = float(km_total[:len(km_total)-3] + "." + km_total[len(km_total)-3:])
+        km_total = float(km_total[:len(km_total)-3] + "." + km_total[len(km_total)-3:])     
 
         # Get the data from the questionnaires 
-        mileage = self.getTaskInfo(day, collaborator)
+        mileage = self.getTaskInfo(day, collab)
         beginCar = int(mileage[0]) if len(mileage) >= 1 and ('www' not in mileage[0].split('.') and 'apresentou' not in mileage[0].split(' ')) else 0
         endCar = int(mileage[1]) if len(mileage) >= 2 and ('www' not in mileage[1].split('.') and 'apresentou' not in mileage[1].split(' ')) else 0
-
+        
+        
         # Creating the dict with the info
         data = {
             "Nome": [collaborator.upper()],

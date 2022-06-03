@@ -65,12 +65,12 @@ class Tracking(tk.Tk):
         # Button to generate the report
         self.btn_generate = tk.Button(self, borderwidth=0, image=self.img_button)
         self.btn_generate.place(relx=0.18, rely=0.9)
-        self.btn_generate['command'] = lambda: self.generateReport(self.beginInt.get(), self.endInt.get(), self.name.get())
+        self.btn_generate['command'] = lambda: self.generateReport(self.beginInt.get(), self.endInt.get(), self.name.get(), self.name.get() in list(self.auvo.getUsers().keys()))
     
     def __exit__(self):
         self.auvo.__exit__()
 
-    def generateReport(self, begin, end, collaborator):
+    def generateReport(self, begin, end, collaborator, is_collab=True):
         """
         Will generate the report with the informations of the graphic interface
 
@@ -107,7 +107,7 @@ class Tracking(tk.Tk):
                 self.auvo.loginAuvo()
                 self.auvo.goToRelatorios()
                 
-            df = self.auvo.getIntervalReport(begin, end, collaborator)
+            df = self.auvo.getIntervalReport(begin, end, collaborator, is_collab)
             xlsxReport(df)
             emailReport(df)
             postNotion(df)
