@@ -31,9 +31,11 @@ class Tracking(tk.Tk):
 
         # Name of collaborator
         self.name = tk.StringVar()
-        self.names = list(self.auvo.getUsers().keys())
+        self.names = [list(self.auvo.getTeams().keys())[0]]
+        self.names = self.names + list(self.auvo.getUsers().keys())
         self.name.set(self.names[0])
         self.collaborators = tk.OptionMenu(self, self.name, *self.names)
+        self.collaborators['menu'].insert_separator(1)
         self.collaborators.config(bg="white", fg="black",font=("Arial", 10, "bold"), borderwidth=0, width=38)
         self.collaborators.place(relx=0.175, rely=0.37)
 
