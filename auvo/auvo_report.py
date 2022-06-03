@@ -180,7 +180,7 @@ def emailReport(df:DataFrame):
 
     for i in range(len(df)):
         bg = 'red' if float(df['Comparativo'][i]) <= -2 else '#58BB43'
-        divergence_records += f""" <tr bgcolor={bg}><td>{df['Nome'][i]}</td><td>{df['Km Inicial Carro'][i]}</td><td>{df['Km Final Carro'][i]}</td><td>{df['Km Sistema'][i]}</td><td>{df['Km Total'][i]}</td><td>{df['Data'][i]}</td><td>{df['Comparativo'][i]}</td></tr> """
+        divergence_records += f""" <tr bgcolor={bg}><td>{df['Nome'][i]}</td><td>{df['Km Inicial Carro'][i]}</td><td>{df['Km Final Carro'][i]}</td><td>{df['Km Sistema'][i]}</td><td>{df['Km Total'][i]}</td><td>{df['Data'][i]}</td><td>{df['Comp. Auvo'][i]}</td><td>{df['Comp. Veículo'][i]}</td></tr> """
 
     
     # Estilo css que será adicionado ao corpo do e-mail
@@ -232,7 +232,8 @@ def emailReport(df:DataFrame):
                                 <th>Km Sistema</th>
                                 <th>Km Total</th>
                                 <th>Data</th>
-                                <th>Comparativo</th>
+                                <th>Comparativo Auvo</th>
+                                <th>Comparativo Veículo</th>
                             </tr>
                         </thead>
                         <tbody>
