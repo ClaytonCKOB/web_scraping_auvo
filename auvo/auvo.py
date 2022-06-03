@@ -270,6 +270,29 @@ class Auvo():
                 users[user['name']] = user['userID']
         
         return users
+    
+    def getTeams(self) -> dict:
+        """
+        Method will request the list of teams
+        """
+
+        teams = {}
+
+        headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+ self.getAccessToken()
+        }
+        
+        request = requests.get(f'https://api.auvo.com.br/v2/teams/?paramFilter={""}&page={1}&pageSize={10}&order={"asc"}&selectfields={""}', headers=headers)
+        
+        request = request.json()
+        request = json.loads(json.dumps(dict(request['result']), indent=5))
+        request = request['entityList']
+        
+        for team in request:
+            teams[team['description']] = team['teamUsers']
+        
+        return teams
 
     def getTasksId(self, date, collaborator):
         """
