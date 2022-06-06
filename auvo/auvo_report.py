@@ -1,9 +1,13 @@
 # This file will include functions that will be responsible to organize 
 # the data of the website converting it to xlsx, pdf...
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 from pandas import DataFrame
 import pandas as pd
 import auvo.constants as const
 from email.message import EmailMessage
+from bs4 import BeautifulSoup
 import requests
 import json
 import smtplib
@@ -170,9 +174,9 @@ def emailReport(df:DataFrame):
     # Variables
     sender = const.EMAIL
     password = const.E_PASS
-    msg = EmailMessage()
-    css_style = ""
+    msg = MIMEMultipart('related')
     divergence_records = ""
+    text_html = ""
 
     msg['Subject'] = "Relatório Semanal da Quilometragem"
     msg['From'] = sender
@@ -182,71 +186,49 @@ def emailReport(df:DataFrame):
         bg = 'red' if float(df['Comp. Auvo'][i]) <= -2 else '#58BB43'
         divergence_records += f""" <tr bgcolor={bg}><td>{df['Nome'][i]}</td><td>{df['Km Inicial Carro'][i]}</td><td>{df['Km Final Carro'][i]}</td><td>{df['Km Sistema'][i]}</td><td>{df['Km Total'][i]}</td><td>{df['Data'][i]}</td><td>{df['Comp. Auvo'][i]}</td><td>{df['Comp. Veículo'][i]}</td></tr> """
 
-    
-    # Estilo css que será adicionado ao corpo do e-mail
-    css_style = """
-    body{
-        background-color: #eff3f6;
-        font-family: 'Arial';
-        padding: 40px;
-    }   
-    #info-itens{
-        border-collapse: collapse;
-        margin-top: 50px;
-        margin-bottom: 50px;
-        margin-left: auto;
-        margin-right: auto;
-        font-size: 0.9em;
-    }   
-    #info-itens thead tr{
-        background-color: #3c3c3c;
-        color: #fff;
-        text-align: left;
-        font-weight: bold;
-    }   
-    #info-itens th,
-    #info-itens td{
-        padding: 12px 15px;
-    }   
-    #info-itens tbody tr{
-        border-bottom: 1px solid #ddd;
-        color: #fff;
-    }   
-    """ 
+    # Getting the interval of the report
+    interval = str(df['Data'][0]) + " - > " + str(df['Data'][len(df)-1])
 
     # HMTL code of the email
-    msg.add_alternative(f"""
-    <!DOCTYPE html>
-    <html>
-        <style>
-            {css_style}
-        </style>
-        <body>
-                <div id=tabela>
-                    <table id=info-itens>
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Km Inicial Carro</th>
-                                <th>Km Final Carro</th>
-                                <th>Km Sistema</th>
-                                <th>Km Total</th>
-                                <th>Data</th>
-                                <th>Comparativo Auvo</th>
-                                <th>Comparativo Veículo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {divergence_records}
-                        </tbody>
-                    </table>
-                </div>
-        </body>
-    </html>
-    """, subtype='html')    
-        
+    with open(r"C:\Users\ti\Documents\tracking\auvo\email.html") as f:
+        html = f.readlines()
+    
+    # Organizing the text
+    for i in range(len(html)):
+        text_html += html[i].replace("\n", '')
+    
+    # Adding the reports to the html
+    text_html = text_html.replace("{divergence_records}", divergence_records)
+
+    # Adding the interval to the html
+    text_html = text_html.replace("replace_interval_here", interval)
+
+
+    msgAlternative = MIMEMultipart('alternative')
+    msg.attach(msgAlternative)
+
+    msgText = MIMEText('Alternative plain text message.')
+    msgAlternative.attach(msgText)
+
+    msgText = MIMEText(text_html, 'html')
+    msgAlternative.attach(msgText)
+
+    # Adding the images of the html's body
+    for i in range(1, 6):
+        #Attach Image 
+        fp = open(f'{const.BASE_DIR}\images\image-{i}.png', 'rb') #Read image 
+        msgImage = MIMEImage(fp.read())
+        fp.close()
+        # Define the image's ID as referenced above
+        msgImage.add_header('Content-ID', f'<image-{i}>')
+        msg.attach(msgImage)
+
     # Send email
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
     server.login(sender, password)
-    server.send_message(msg)
+    server.sendmail(sender, const.TO_EMAIL, msg.as_string())
+
+if __name__ == "__main__":
+    df = []
+    emailReport(df)
