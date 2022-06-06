@@ -190,7 +190,7 @@ def emailReport(df:DataFrame):
     interval = str(df['Data'][0]) + " - > " + str(df['Data'][len(df)-1])
 
     # HMTL code of the email
-    with open(r"C:\Users\ti\Documents\tracking\auvo\email.html") as f:
+    with open(str(const.BASE_DIR) + r"\auvo\email.html") as f:
         html = f.readlines()
     
     # Organizing the text
@@ -229,6 +229,3 @@ def emailReport(df:DataFrame):
     server.login(sender, password)
     server.sendmail(sender, const.TO_EMAIL, msg.as_string())
 
-if __name__ == "__main__":
-    df = []
-    emailReport(df)
