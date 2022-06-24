@@ -9,7 +9,159 @@ import requests
 import json
 import auvo.constants as const
 
-class Auvo():
+class AuvoApi():
+    def __init__(self):
+        pass
+
+    def getAccessToken(self) -> str:
+        """
+        Method will make a request to get the access Token
+        """ 
+
+        headers = {'Content-Type': 'application/json'}
+        request = requests.get(f'https://api.auvo.com.br/v2/login/?apiKey={const.APP_KEY}&apiToken={const.TOKEN}', headers=headers)
+        request = request.json()
+        request = json.loads(json.dumps(dict(request['result']), indent=5))
+        self.accessToken = request['accessToken']
+
+        return self.accessToken
+
+ 
+    def getUsers(self) -> dict:
+        """
+        Method will request the list of collaborators
+        """
+        users = {}
+
+        headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+ self.getAccessToken()
+        }
+        
+        request = requests.get(f'https://api.auvo.com.br/v2/users/?paramFilter={""}&page={1}&pageSize={10}&order={"asc"}&selectfields={""}', headers=headers)
+        
+        request = request.json()
+        request = json.loads(json.dumps(dict(request['result']), indent=5))
+        request = request['entityList']
+        
+        for user in request:
+            if "Técnico de Instalação" in user['jobPosition']:
+                users[user['name']] = user['userID']
+        
+        return users
+    
+    def getTeams(self) -> dict:
+        """
+        Method will request the list of teams
+        """
+
+        teams = {}
+
+        headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+ self.getAccessToken()
+        }
+        
+        request = requests.get(f'https://api.auvo.com.br/v2/teams/?paramFilter={""}&page={1}&pageSize={10}&order={"asc"}&selectfields={""}', headers=headers)
+        
+        request = request.json()
+        request = json.loads(json.dumps(dict(request['result']), indent=5))
+        request = request['entityList']
+        
+        for team in request:
+            teams[team['description']] = team['teamUsers']
+        
+        return teams
+
+    def getTasksId(self, date, collaborator):
+        """
+        Will request the list of tasks of the day and will return the ids of the ones that are 
+        related to the km.
+
+        :Args
+            date: String -> represent the day that will be use in the request
+            collaborator: String
+        
+        :Usage
+            getTaskId('20/05/2022', 'clayton)
+
+        """
+        ids = []
+        year = date[-4:]
+        day = date[:2]
+        date = year + '-' + date[3:len(date)-5] + '-' + day     # Converting the format of the date
+        users = self.getUsers()
+        id = users[collaborator]
+
+        # Parameters
+        headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+ self.getAccessToken()
+        }
+        
+
+        paramFilter = {
+            'startDate': date,
+            'endDate': date,
+            'idUserTo': id
+        }
+
+        paramFilter = json.loads(json.dumps(paramFilter))
+
+        # Request
+        request = requests.get(f'https://api.auvo.com.br/v2/tasks/?paramFilter={paramFilter}&page={1}&pageSize={10}&order={"asc"}', headers=headers)
+        
+        if request.status_code < 400 :
+            # Converting the response to json
+            request = request.json()
+            request = json.loads(json.dumps(dict(request['result']), indent=5))
+            request = request['entityList']
+
+            # Searching for the ids where the word 'veiculo' is included
+            for task in request:
+                if 'VEÍCULO-' in task['customerDescription'] or 'VEÍCULO' in task['customerDescription']:
+                    ids.append(task['taskID'])
+        elif request.status_code == 404:
+            return -1
+
+        return ids
+        
+    def getTaskInfo(self, day, collaborator):
+        """
+        Will make a request to get the answers of the collaborators from the questionnaire
+        
+        :Args
+            day: String -> represent the day that will be use in the request
+            collaborator: String 
+        
+        :Usage
+            getTaskInfo('20/05/2022', 'Clayton)
+
+        """
+        ids = self.getTasksId(day, collaborator)
+        mileage = []
+
+        headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+ self.getAccessToken()
+        }
+
+        if ids != -1:
+            for id in ids:
+                request = requests.get(f'https://api.auvo.com.br/v2/tasks/{id}', headers=headers)
+                request = request.json()
+                request = json.loads(json.dumps(dict(request['result']), indent=5))
+
+                if request['questionnaires'] != []:
+                    request = request['questionnaires'][0]['answers'][1]['reply']
+
+                    mileage.append(request)
+        else: return [-1]
+
+        return mileage
+
+
+class Auvo(AuvoApi):
     def __init__(self, driver_path=""):
         global driver
         self.driver_path = driver_path
@@ -57,7 +209,7 @@ class Auvo():
         """
         Will access the 'Relatorios' page
         """
-        driver.implicitly_wait(10)
+        driver.implicitly_wait(15)
         btnRel = driver.find_element(By.ID, "controlaClique3")
         btnRel.click()
 
@@ -90,7 +242,7 @@ class Auvo():
 
         while (begin[1] == end[1] and day <= int(end[0])) or (begin[1] != end[1] and day != int(end[0]) + 1):
             self.selectDailyReport(str(day)+"/"+str(month)+"/"+end[2], collaborator, is_collab)
-            time.sleep(8)
+            time.sleep(11)
             data = pd.concat([data, self.getReportData(str(day)+"/"+str(month)+"/"+end[2], collaborator, is_collab)], axis=0)
             if day + 1 <= int(last_day):
                 day += 1
@@ -115,14 +267,23 @@ class Auvo():
 
         """
         
-        driver.implicitly_wait(10)
+        driver.implicitly_wait(15)
+        try:
+            # Select the begin of the interval
+            begin_element = driver.find_element(By.ID, "dataInicio")
+            begin_element.click()
+            self.selectDayinTable(day)
 
-        # Select the begin of the interval
-        begin_element = driver.find_element(By.ID, "dataInicio")
-        begin_element.click()
-        self.selectDayinTable(day)
+        except:
+            driver.get(driver.current_url)
+            driver.refresh()
+            driver.implicitly_wait(15)
+            # Select the begin of the interval
+            begin_element = driver.find_element(By.ID, "dataInicio")
+            begin_element.click()
+            self.selectDayinTable(day)
 
-        driver.implicitly_wait(10)
+        driver.implicitly_wait(15)
         # Select the end of the interval
         end_element = driver.find_element(By.ID, "dataFim")
         end_element.click()
@@ -255,8 +416,8 @@ class Auvo():
 
         # Get the data from the questionnaires 
         mileage = self.getTaskInfo(day, collab)
-        beginCar = int(mileage[0]) if len(mileage) >= 1 and ('www' not in mileage[0].split('.') and 'apresentou' not in mileage[0].split(' ')) else 0
-        endCar = int(mileage[1]) if len(mileage) >= 2 and ('www' not in mileage[1].split('.') and 'apresentou' not in mileage[1].split(' ')) else 0
+        beginCar = int(mileage[0]) if len(mileage) >= 1 and ('www' not in str(mileage[0]).split('.') and 'apresentou' not in str(mileage[0]).split(' ')) else 0
+        endCar = int(mileage[1]) if len(mileage) >= 2 and   ('www' not in str(mileage[1]).split('.') and 'apresentou' not in str(mileage[1]).split(' ')) else 0
         
         
         # Creating the dict with the info
@@ -274,145 +435,5 @@ class Auvo():
         return pd.DataFrame(data)
 
 
-    def getAccessToken(self) -> str:
-        """
-        Method will make a request to get the access Token
-        """ 
-
-        headers = {'Content-Type': 'application/json'}
-        request = requests.get(f'https://api.auvo.com.br/v2/login/?apiKey={const.APP_KEY}&apiToken={const.TOKEN}', headers=headers)
-        request = request.json()
-        request = json.loads(json.dumps(dict(request['result']), indent=5))
-        self.accessToken = request['accessToken']
-
-        return self.accessToken
-
- 
-    def getUsers(self) -> dict:
-        """
-        Method will request the list of collaborators
-        """
-        users = {}
-
-        headers = {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer '+ self.getAccessToken()
-        }
-        
-        request = requests.get(f'https://api.auvo.com.br/v2/users/?paramFilter={""}&page={1}&pageSize={10}&order={"asc"}&selectfields={""}', headers=headers)
-        
-        request = request.json()
-        request = json.loads(json.dumps(dict(request['result']), indent=5))
-        request = request['entityList']
-        
-        for user in request:
-            if "Técnico de Instalação" in user['jobPosition']:
-                users[user['name']] = user['userID']
-        
-        return users
     
-    def getTeams(self) -> dict:
-        """
-        Method will request the list of teams
-        """
 
-        teams = {}
-
-        headers = {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer '+ self.getAccessToken()
-        }
-        
-        request = requests.get(f'https://api.auvo.com.br/v2/teams/?paramFilter={""}&page={1}&pageSize={10}&order={"asc"}&selectfields={""}', headers=headers)
-        
-        request = request.json()
-        request = json.loads(json.dumps(dict(request['result']), indent=5))
-        request = request['entityList']
-        
-        for team in request:
-            teams[team['description']] = team['teamUsers']
-        
-        return teams
-
-    def getTasksId(self, date, collaborator):
-        """
-        Will request the list of tasks of the day and will return the ids of the ones that are 
-        related to the km.
-
-        :Args
-            date: String -> represent the day that will be use in the request
-            collaborator: String
-        
-        :Usage
-            getTaskId('20/05/2022', 'clayton)
-
-        """
-        ids = []
-        year = date[-4:]
-        day = date[:2]
-        date = year + '-' + date[3:len(date)-5] + '-' + day     # Converting the format of the date
-        users = self.getUsers()
-        id = users[collaborator]
-
-        # Parameters
-        headers = {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer '+ self.getAccessToken()
-        }
-        
-
-        paramFilter = {
-            'startDate': date,
-            'endDate': date,
-            'idUserTo': id
-        }
-
-        paramFilter = json.loads(json.dumps(paramFilter))
-
-        # Request
-        request = requests.get(f'https://api.auvo.com.br/v2/tasks/?paramFilter={paramFilter}&page={1}&pageSize={10}&order={"asc"}', headers=headers)
-        
-        if request.status_code < 400 :
-            # Converting the response to json
-            request = request.json()
-            request = json.loads(json.dumps(dict(request['result']), indent=5))
-            request = request['entityList']
-
-            # Searching for the ids where the word 'veiculo' is included
-            for task in request:
-                if 'VEÍCULO-' in task['customerDescription'] or 'VEÍCULO' in task['customerDescription']:
-                    ids.append(task['taskID'])
-
-        return ids
-        
-    def getTaskInfo(self, day, collaborator):
-        """
-        Will make a request to get the answers of the collaborators from the questionnaire
-        
-        :Args
-            day: String -> represent the day that will be use in the request
-            collaborator: String 
-        
-        :Usage
-            getTaskInfo('20/05/2022', 'Clayton)
-
-        """
-        ids = self.getTasksId(day, collaborator)
-        mileage = []
-
-        headers = {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer '+ self.getAccessToken()
-        }
-
-        for id in ids:
-            request = requests.get(f'https://api.auvo.com.br/v2/tasks/{id}', headers=headers)
-            request = request.json()
-            request = json.loads(json.dumps(dict(request['result']), indent=5))
-
-            if request['questionnaires'] != []:
-                request = request['questionnaires'][0]['answers'][1]['reply']
-
-                mileage.append(request)
-
-        return mileage

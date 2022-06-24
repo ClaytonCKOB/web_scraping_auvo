@@ -68,7 +68,7 @@ def emailAlert(today):
     server.starttls()
     server.login(sender, password)
     server.sendmail(sender, const.TO_EMAIL, msg.as_string())
-    #server.sendmail(sender, "financeiro@reflexapersianas.com", msg.as_string())
+    
 
 
 inst = AuvoApi()
